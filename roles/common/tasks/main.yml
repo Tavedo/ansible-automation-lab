@@ -1,0 +1,53 @@
+---
+# roles/common/tasks/main.yml
+# Baseline tasks applied to ALL network devices
+
+- name: Set hostname
+  cisco.ios.ios_hostname:
+    config:
+      hostname: "{{ hostname }}"
+    state: merged
+
+- name: Configure domain name
+  cisco.ios.ios_config:
+    lines:
+      - "ip domain name {{ domain_name }}"
+
+- name: Enable SSH v2
+  cisco.ios.ios_config:
+    lines:
+      - "ip ssh version 2"
+      - "ip ssh time-out 60"
+      - "ip ssh authentication-retries 3"
+
+- name: Secure VTY lines
+  cisco.ios.ios_config:
+    lines:
+      - "login local"
+      - "transport input ssh"
+      - "exec-timeout 15 0"
+    parents: "line vty 0 4"
+
+- name: Configure NTP server
+  cisco.ios.ios_ntp_global:
+    config:
+      servers:
+        - server: "{{ ntp_server }}"
+    state: merged
+
+- name: Configure syslog
+  cisco.ios.ios_logging_global:
+    config:
+      hosts:
+        - hostname: "{{ syslog_server }}"
+    state: merged
+
+- name: Disable CDP on external-facing interfaces
+  cisco.ios.ios_config:
+    lines:
+      - "no cdp run"
+  when: disable_cdp | default(false)
+
+- name: Save configuration
+  cisco.ios.ios_config:
+    save_when: always

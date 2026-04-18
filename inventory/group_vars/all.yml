@@ -1,0 +1,7 @@
+---
+# Global variables for all devices
+ntp_server: "192.168.255.81"
+dns_server: "8.8.8.8"
+domain_name: "lab.local"
+syslog_server: "192.168.255.81"
+ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

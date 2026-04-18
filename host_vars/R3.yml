@@ -1,0 +1,18 @@
+---
+hostname: R3
+router_id: 3.3.3.3
+loopback_ip: 3.3.3.3/32
+
+interfaces:
+  - name: Ethernet0/0
+    description: "MGMT"
+    ip: 192.168.255.103/24
+    ospf: true
+  - name: Ethernet0/1
+    description: "to_S3"
+    ip: 192.168.250.3/24
+    ospf: true
+  - name: Ethernet0/2
+    description: "to_R2"
+    ip: 10.0.23.2/30
+    ospf: true

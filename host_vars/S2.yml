@@ -1,0 +1,15 @@
+---
+hostname: S2
+mgmt_ip: 192.168.250.2/24
+mgmt_gateway: 192.168.250.1
+stp_priority: 4096   # root bridge for VLANs 10,20
+
+trunk_interfaces:
+  - Ethernet0/1   # to S4
+  - Ethernet0/2   # to S3 (cross-link)
+  - Ethernet0/3   # to S3 (cross-link)
+  - Ethernet1/0   # to S3 (EtherChannel)
+  - Ethernet1/1   # to S3 (EtherChannel)
+  - Ethernet1/2   # to S3 (EtherChannel)
+
+uplink_interface: Ethernet0/0  # to R1

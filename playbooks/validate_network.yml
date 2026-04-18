@@ -1,0 +1,103 @@
+---
+# validate_network.yml
+# Validates interface state, OSPF neighbors, VLAN presence, and end-to-end reachability
+# Usage: ansible-playbook playbooks/validate_network.yml -i inventory/hosts.ini
+
+- name: Validate routers
+  hosts: routers
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+    - name: Check interfaces are up
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+      register: intf_brief
+
+    - name: Assert no interfaces are down unexpectedly
+      assert:
+        that:
+          - "'down' not in intf_brief.stdout[0] or 'administratively' in intf_brief.stdout[0]"
+        fail_msg: "{{ inventory_hostname }}: unexpected interface down!"
+        success_msg: "{{ inventory_hostname }}: all interfaces OK"
+
+    - name: Check OSPF neighbors
+      cisco.ios.ios_command:
+        commands:
+          - show ip ospf neighbor
+      register: ospf_neighbors
+
+    - name: Assert OSPF adjacencies are FULL
+      assert:
+        that:
+          - "'FULL' in ospf_neighbors.stdout[0]"
+        fail_msg: "{{ inventory_hostname }}: OSPF has no FULL neighbors!"
+        success_msg: "{{ inventory_hostname }}: OSPF neighbors OK"
+
+    - name: Check routing table
+      cisco.ios.ios_command:
+        commands:
+          - show ip route
+      register: ip_route
+
+    - name: Assert management and L2 networks are reachable
+      assert:
+        that:
+          - "'192.168.255.0' in ip_route.stdout[0]"
+          - "'192.168.250.0' in ip_route.stdout[0]"
+        fail_msg: "{{ inventory_hostname }}: missing expected routes!"
+        success_msg: "{{ inventory_hostname }}: routing table OK"
+
+    - name: Ping all other routers
+      cisco.ios.ios_command:
+        commands:
+          - "ping {{ item }} repeat 5"
+      register: ping_result
+      loop:
+        - 192.168.255.101
+        - 192.168.255.102
+        - 192.168.255.103
+      when: item != ansible_host
+
+    - name: Assert pings succeed
+      assert:
+        that:
+          - "'!!!!!' in item.stdout[0]"
+        fail_msg: "Ping to {{ item.item }} FAILED from {{ inventory_hostname }}"
+        success_msg: "Ping to {{ item.item }} OK from {{ inventory_hostname }}"
+      loop: "{{ ping_result.results }}"
+      when: item.skipped is not defined
+
+- name: Validate switches
+  hosts: switches
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+    - name: Check VLAN database
+      cisco.ios.ios_command:
+        commands:
+          - show vlan brief
+      register: vlan_brief
+
+    - name: Assert VLANs are present
+      assert:
+        that:
+          - "'10' in vlan_brief.stdout[0]"
+          - "'20' in vlan_brief.stdout[0]"
+        fail_msg: "{{ inventory_hostname }}: VLANs missing!"
+        success_msg: "{{ inventory_hostname }}: VLANs OK"
+
+    - name: Check spanning-tree state
+      cisco.ios.ios_command:
+        commands:
+          - show spanning-tree summary
+      register: stp_summary
+
+    - name: Assert STP is rapid-pvst
+      assert:
+        that:
+          - "'Rapid Pvst' in stp_summary.stdout[0] or 'rapid-pvst' in stp_summary.stdout[0]"
+        fail_msg: "{{ inventory_hostname }}: STP mode unexpected!"
+        success_msg: "{{ inventory_hostname }}: STP mode OK"

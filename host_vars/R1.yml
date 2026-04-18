@@ -1,0 +1,18 @@
+---
+hostname: R1
+router_id: 1.1.1.1
+loopback_ip: 1.1.1.1/32
+
+interfaces:
+  - name: Ethernet0/0
+    description: "MGMT"
+    ip: 192.168.255.101/24
+    ospf: true
+  - name: Ethernet0/1
+    description: "to_S2"
+    ip: 192.168.250.1/24
+    ospf: true
+  - name: Ethernet0/3
+    description: "to_R2"
+    ip: 10.0.12.1/30
+    ospf: true

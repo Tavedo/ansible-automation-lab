@@ -1,0 +1,29 @@
+# Ansible sensitive files
+.vault_pass
+*.retry
+host_vars/**/secrets.yml
+
+# Backup outputs
+backups/
+*.bak
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# add to .gitignore in both repos
+echo "*.yaml.bak" >> .gitignore
+echo "cml_topology*.yaml" >> .gitignore
+echo "*_topology.yaml" >> .gitignore
+echo "ansible_cml_lab.yaml" >> .gitignore
+echo "pyats_cml_lab.yaml" >> .gitignore

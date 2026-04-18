@@ -1,0 +1,15 @@
+---
+hostname: S3
+mgmt_ip: 192.168.250.3/24
+mgmt_gateway: 192.168.250.1
+stp_priority: 8192   # secondary root
+
+trunk_interfaces:
+  - Ethernet0/1   # to S5
+  - Ethernet0/2   # to S4 (cross-link)
+  - Ethernet0/3   # to S2 (cross-link)
+  - Ethernet1/0   # to S2 (EtherChannel)
+  - Ethernet1/1   # to S2 (EtherChannel)
+  - Ethernet1/2   # to S2 (EtherChannel)
+
+uplink_interface: Ethernet0/0  # to R3

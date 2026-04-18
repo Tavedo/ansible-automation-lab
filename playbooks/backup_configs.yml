@@ -1,0 +1,48 @@
+---
+# backup_configs.yml
+# Backs up running configs from all network devices to backups/
+# Usage: ansible-playbook playbooks/backup_configs.yml -i inventory/hosts.ini
+
+- name: Backup running configurations
+  hosts: network
+  gather_facts: false
+  connection: network_cli
+
+  vars:
+    backup_dir: "backups/{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+
+  tasks:
+    - name: Create backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+      run_once: true
+      delegate_to: localhost
+
+    - name: Collect running config
+      cisco.ios.ios_command:
+        commands:
+          - show running-config
+      register: running_config
+
+    - name: Save config to file
+      copy:
+        content: "{{ running_config.stdout[0] }}"
+        dest: "{{ backup_dir }}/{{ inventory_hostname }}_running_config.txt"
+      delegate_to: localhost
+
+    - name: Collect show version
+      cisco.ios.ios_command:
+        commands:
+          - show version
+      register: show_version
+
+    - name: Save version info
+      copy:
+        content: "{{ show_version.stdout[0] }}"
+        dest: "{{ backup_dir }}/{{ inventory_hostname }}_version.txt"
+      delegate_to: localhost
+
+    - name: Summary
+      debug:
+        msg: "✅ Backup complete for {{ inventory_hostname }} → {{ backup_dir }}"

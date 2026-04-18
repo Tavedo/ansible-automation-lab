@@ -1,0 +1,91 @@
+---
+# configure_routers.yml
+# Configures interfaces, OSPF, SSH and NTP on R1, R2, R3
+# Usage: ansible-playbook playbooks/configure_routers.yml -i inventory/hosts.ini
+
+- name: Configure IOS-XE routers
+  hosts: routers
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+    - name: Set hostname
+      cisco.ios.ios_hostname:
+        config:
+          hostname: "{{ hostname }}"
+        state: merged
+
+    - name: Configure loopback interface
+      cisco.ios.ios_interfaces:
+        config:
+          - name: Loopback0
+            description: "Router-ID loopback"
+            enabled: true
+        state: merged
+
+    - name: Assign IP to loopback
+      cisco.ios.ios_l3_interfaces:
+        config:
+          - name: Loopback0
+            ipv4:
+              - address: "{{ loopback_ip }}"
+        state: merged
+
+    - name: Configure physical interfaces
+      cisco.ios.ios_interfaces:
+        config:
+          - name: "{{ item.name }}"
+            description: "{{ item.description }}"
+            enabled: true
+        state: merged
+      loop: "{{ interfaces }}"
+
+    - name: Assign IPs to physical interfaces
+      cisco.ios.ios_l3_interfaces:
+        config:
+          - name: "{{ item.name }}"
+            ipv4:
+              - address: "{{ item.ip }}"
+        state: merged
+      loop: "{{ interfaces }}"
+
+    - name: Configure OSPF process
+      cisco.ios.ios_ospf_interfaces:
+        config:
+          - name: Loopback0
+            address_family:
+              - afi: ipv4
+                area:
+                  area_id: "{{ ospf_area }}"
+                network:
+                  point_to_point: true
+        state: merged
+
+    - name: Enable OSPF on interfaces
+      cisco.ios.ios_config:
+        lines:
+          - "router ospf {{ ospf_process_id }}"
+          - " router-id {{ router_id }}"
+          - " network {{ item.ip | ipaddr('network/prefix') }} area {{ ospf_area }}"
+      loop: "{{ interfaces | selectattr('ospf', 'equalto', true) | list }}"
+
+    - name: Configure NTP
+      cisco.ios.ios_ntp_global:
+        config:
+          servers:
+            - server: "{{ ntp_server }}"
+        state: merged
+
+    - name: Enable SSH v2
+      cisco.ios.ios_config:
+        lines:
+          - "ip domain name {{ domain_name }}"
+          - "crypto key generate rsa modulus 2048"
+          - "ip ssh version 2"
+          - "line vty 0 4"
+          - " login local"
+          - " transport input ssh"
+
+    - name: Save configuration
+      cisco.ios.ios_config:
+        save_when: always

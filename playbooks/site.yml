@@ -1,0 +1,21 @@
+---
+# site.yml — Master playbook, runs all roles in order
+# Usage: ansible-playbook playbooks/site.yml -i inventory/hosts.ini
+
+- name: Apply common baseline to all network devices
+  hosts: network
+  gather_facts: false
+  roles:
+    - common
+
+- name: Configure routers
+  hosts: routers
+  gather_facts: false
+  roles:
+    - router
+
+- name: Configure switches
+  hosts: switches
+  gather_facts: false
+  roles:
+    - switches
