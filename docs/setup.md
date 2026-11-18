@@ -51,7 +51,7 @@ chmod 600 .vault_pass
 Encrypt your device password:
 
 ```bash
-ansible-vault encrypt_string 'cisco' --name 'vault_device_password'
+ansible-vault encrypt_string '<your-device-password>' --name 'vault_device_password'
 ```
 
 Paste the output into `inventory/group_vars/all.yml`.

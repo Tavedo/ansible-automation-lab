@@ -2,7 +2,7 @@ hostname S4
 !
 ip domain name lab.local
 !
-username admin privilege 15 secret cisco
+username admin privilege 15 secret <LAB_PASSWORD>
 ip ssh version 2
 !
 vlan 10
